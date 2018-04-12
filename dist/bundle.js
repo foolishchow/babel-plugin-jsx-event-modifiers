@@ -4,6 +4,7 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 
 var syntaxJsx = _interopDefault(require('babel-plugin-syntax-jsx'));
 
+var TSXMODIFIER = /^([0-9a-zA-Z]+\-?[0-9a-zA-Z]+)((\-\-[0-9a-zA-Z]+)+)$/;
 var groupEventAttributes = (function (t) {
   return function (obj, attribute) {
     if (t.isJSXSpreadAttribute(attribute)) {
@@ -11,8 +12,33 @@ var groupEventAttributes = (function (t) {
     }
 
     var isNamespaced = t.isJSXNamespacedName(attribute.get('name'));
-    var event = (isNamespaced ? attribute.get('name').get('namespace') : attribute.get('name')).get('name').node;
-    var modifiers = isNamespaced ? new Set(attribute.get('name').get('name').get('name').node.split('-')) : new Set();
+    var event = null;
+    var modifiers = null;
+
+    // const event = (isNamespaced ? attribute.get('name').get('namespace') : attribute.get('name')).get('name').node
+    // const modifiers = isNamespaced ? new Set(attribute.get('name').get('name').get('name').node.split('-')) : new Set()
+
+    if (isNamespaced) {
+      event = attribute.get('name').get('namespace').get('name').node;
+      modifiers = new Set(attribute.get('name').get('name').get('name').node.split('-'));
+    } else {
+      //allow on-click--modifier1--modifer2
+      /* var a = 'on-click--modifier1--modifer2'
+       var b = 'on-click--modifier1--modifer2--modifier3'
+        console.info(a.match(reg))
+        console.info(b.match(reg))
+       */
+      var total = attribute.get('name').get('name').node;
+
+      if (TSXMODIFIER.test(total)) {
+        var matched = total.match(TSXMODIFIER);
+        event = matched[1];
+        modifiers = new Set(matched[2].replace(/^\-\-/, '').split('--'));
+      } else {
+        event = attribute.get('name').get('name').node;
+        modifiers = new Set();
+      }
+    }
 
     if (event.indexOf('on') !== 0) {
       return obj;
@@ -43,7 +69,11 @@ var groupEventAttributes = (function (t) {
       obj[eventName] = [];
     }
 
-    obj[eventName].push({ modifiers, expression, attribute });
+    obj[eventName].push({
+      modifiers,
+      expression,
+      attribute
+    });
 
     return obj;
   };
