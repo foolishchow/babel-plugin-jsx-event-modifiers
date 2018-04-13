@@ -6,6 +6,7 @@ var syntaxJsx = _interopDefault(require('babel-plugin-syntax-jsx'));
 
 var TSXMODIFIER = /^([0-9a-zA-Z]+\-?[0-9a-zA-Z]+)((\-\-[0-9a-zA-Z]+)+)$/;
 var groupEventAttributes = (function (t) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
   return function (obj, attribute) {
     if (t.isJSXSpreadAttribute(attribute)) {
       return obj;
@@ -30,12 +31,12 @@ var groupEventAttributes = (function (t) {
        */
       var total = attribute.get('name').get('name').node;
 
-      if (TSXMODIFIER.test(total)) {
+      if (options.tsx && TSXMODIFIER.test(total)) {
         var matched = total.match(TSXMODIFIER);
         event = matched[1];
         modifiers = new Set(matched[2].replace(/^\-\-/, '').split('--'));
       } else {
-        event = attribute.get('name').get('name').node;
+        event = total;
         modifiers = new Set();
       }
     }
@@ -167,7 +168,8 @@ var generateSpreadEvent = (function (t) {
 });
 
 var index = (function (_ref) {
-  var t = _ref.types;
+  var t = _ref.types,
+      options = _ref.options;
   return {
     inherits: syntaxJsx,
     visitor: {
@@ -175,7 +177,7 @@ var index = (function (_ref) {
         path.traverse({
           JSXOpeningElement(path) {
             var attributes = path.get('attributes');
-            var groupedEventAttributes = attributes.reduce(groupEventAttributes(t), {});
+            var groupedEventAttributes = attributes.reduce(groupEventAttributes(t, options), {});
             var events = Object.keys(groupedEventAttributes).map(function (key) {
               return [key, groupedEventAttributes[key]];
             });

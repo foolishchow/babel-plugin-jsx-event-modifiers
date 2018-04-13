@@ -1,5 +1,5 @@
 const TSXMODIFIER = /^([0-9a-zA-Z]+\-?[0-9a-zA-Z]+)((\-\-[0-9a-zA-Z]+)+)$/
-export default t => (obj, attribute) => {
+export default (t, options = {}) => (obj, attribute) => {
   if (t.isJSXSpreadAttribute(attribute)) {
     return obj
   }
@@ -23,12 +23,12 @@ export default t => (obj, attribute) => {
      */
     let total = attribute.get('name').get('name').node;
 
-    if (TSXMODIFIER.test(total)) {
+    if (options.tsx && TSXMODIFIER.test(total)) {
       let matched = total.match(TSXMODIFIER);
       event = matched[1]
       modifiers = new Set(matched[2].replace(/^\-\-/, '').split('--'))
     } else {
-      event = attribute.get('name').get('name').node;
+      event = total;
       modifiers = new Set()
     }
   }
