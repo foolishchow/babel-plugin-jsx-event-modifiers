@@ -23,7 +23,7 @@ export default (t, options = {}) => (obj, attribute) => {
      */
     let total = attribute.get('name').get('name').node;
 
-    if (options.tsx && TSXMODIFIER.test(total)) {
+    if (TSXMODIFIER.test(total)) {
       let matched = total.match(TSXMODIFIER);
       event = matched[1]
       modifiers = new Set(matched[2].replace(/^\-\-/, '').split('--'))
